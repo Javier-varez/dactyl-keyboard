@@ -885,8 +885,4 @@
       (write-scad (mirror [-1 0 0] right-plate))
 )
 
-(spit "things/trrs-model.scad"
-      (write-scad trrs-model)
-)
-
 (defn -main [dum] 1)  ; dummy to make it easier to batch
