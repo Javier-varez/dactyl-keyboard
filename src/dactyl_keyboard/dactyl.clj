@@ -281,7 +281,7 @@
 ;; Web Connectors ;;
 ;;;;;;;;;;;;;;;;;;;;
 
-(def web-thickness 3.5)
+(def web-thickness 3.2)
 (def post-size 0.1)
 (def web-post (->> (cube post-size post-size web-thickness)
                    (translate [0 0 (+ (/ web-thickness -2)
@@ -637,16 +637,43 @@
 (def rpi-hole-x (/ 11.4 2))
 (def rpi-hole-y (/ 47 2))
 
-(def rpi-wall-pos (key-position 0 0 (map + (wall-locate2 0 1) [5 (/ mount-height 2) 0])))
+(def rpi-z-pos 3)
+
+(def rpi-wall-pos1 (key-position 0 0 (map + (wall-locate2 0 1) [5 (/ mount-height 2) 0])))
+(def rpi-wall-pos [(first rpi-wall-pos1) (second rpi-wall-pos1) rpi-z-pos])
 (def rpi-pos (map - rpi-wall-pos [0 (/ (+ rpi-length web-thickness) 2) 0]))
 
 (def rpi-drills
   (->>
-    (union
-      (->> (cylinder rpi-hole-radius (+ 10 rpi-height)) (translate [rpi-hole-x rpi-hole-y 0]))
-      (->> (cylinder rpi-hole-radius (+ 10 rpi-height)) (translate [(- 0 rpi-hole-x) rpi-hole-y 0]))
-      (->> (cylinder rpi-hole-radius (+ 10 rpi-height)) (translate [rpi-hole-x (- 0 rpi-hole-y) 0]))
-      (->> (cylinder rpi-hole-radius (+ 10 rpi-height)) (translate [(- 0 rpi-hole-x) (- 0 rpi-hole-y) 0]))
+    (binding [*fn* 32]
+      (union
+        (->> (cylinder rpi-hole-radius (+ 10 rpi-height)) (translate [rpi-hole-x rpi-hole-y 0]))
+        (->> (cylinder rpi-hole-radius (+ 10 rpi-height)) (translate [(- 0 rpi-hole-x) rpi-hole-y 0]))
+        (->> (cylinder rpi-hole-radius (+ 10 rpi-height)) (translate [rpi-hole-x (- 0 rpi-hole-y) 0]))
+        (->> (cylinder rpi-hole-radius (+ 10 rpi-height)) (translate [(- 0 rpi-hole-x) (- 0 rpi-hole-y) 0]))
+      )
+    )
+    (translate rpi-pos)
+  )
+)
+
+(def rpi-drills-head-radius (/ 3.8 2))
+(def rpi-drills-len (+ 15 rpi-height))
+
+(def rpi-drills-with-contersunk
+  (->>
+    (binding [*fn* 32]
+      (union
+        (->> (cylinder rpi-hole-radius rpi-drills-len) (translate [rpi-hole-x rpi-hole-y (/ rpi-drills-len 2)]))
+        (->> (cylinder rpi-hole-radius rpi-drills-len) (translate [(- 0 rpi-hole-x) rpi-hole-y (/ rpi-drills-len 2)]))
+        (->> (cylinder rpi-hole-radius rpi-drills-len) (translate [rpi-hole-x (- 0 rpi-hole-y) (/ rpi-drills-len 2)]))
+        (->> (cylinder rpi-hole-radius rpi-drills-len) (translate [(- 0 rpi-hole-x) (- 0 rpi-hole-y) (/ rpi-drills-len 2)]))
+
+        (->> (cylinder [rpi-drills-head-radius 0] rpi-drills-head-radius) (translate [rpi-hole-x rpi-hole-y (/ rpi-drills-head-radius 2)]))
+        (->> (cylinder [rpi-drills-head-radius 0] rpi-drills-head-radius) (translate [(- 0 rpi-hole-x) rpi-hole-y (/ rpi-drills-head-radius 2)]))
+        (->> (cylinder [rpi-drills-head-radius 0] rpi-drills-head-radius) (translate [rpi-hole-x (- 0 rpi-hole-y) (/ rpi-drills-head-radius 2)]))
+        (->> (cylinder [rpi-drills-head-radius 0] rpi-drills-head-radius) (translate [(- 0 rpi-hole-x) (- 0 rpi-hole-y) (/ rpi-drills-head-radius 2)]))
+      )
     )
     (translate [(first rpi-pos) (second rpi-pos) 0])
   )
@@ -658,7 +685,7 @@
 (def rpi-usb-hole
   (->>
     (cube rpi-usb-hole-w (+ web-thickness 0.3) (* 2 rpi-usb-hole-h))
-    (translate [(first rpi-wall-pos) (second rpi-wall-pos) 0])
+    (translate rpi-wall-pos)
   )
 )
 
@@ -666,15 +693,94 @@
   (difference
     (->>
       (cube rpi-width, rpi-length rpi-height)
-      (translate [(first rpi-pos) (second rpi-pos) 0])
+      (translate rpi-pos)
     )
     rpi-drills
   )
 )
 
+(def rpi-posts-height rpi-z-pos)
+(def rpi-posts-radius (+ rpi-hole-radius 1))
+(def rpi-posts
+  (->>
+    (binding [*fn* 32]
+      (union
+        (->> (cylinder rpi-posts-radius rpi-posts-height) (translate [rpi-hole-x rpi-hole-y (/ rpi-posts-height 2)]))
+        (->> (cylinder rpi-posts-radius rpi-posts-height) (translate [(- 0 rpi-hole-x) rpi-hole-y (/ rpi-posts-height 2)]))
+        (->> (cylinder rpi-posts-radius rpi-posts-height) (translate [rpi-hole-x (- 0 rpi-hole-y) (/ rpi-posts-height 2)]))
+        (->> (cylinder rpi-posts-radius rpi-posts-height) (translate [(- 0 rpi-hole-x) (- 0 rpi-hole-y) (/ rpi-posts-height 2)]))
+      )
+    )
+    (translate [(first rpi-pos) (second rpi-pos) 0])
+  )
+)
+
+; trrs socket is PJ-31640
+
+(def trrs-base-length 10.3)
+(def trrs-hold-length 1.5)
+
+(def trrs-inner-length (+ trrs-base-length trrs-hold-length))
+(def trrs-outer-length 4.7)
+
+(def trrs-length (+ trrs-inner-length trrs-outer-length))
+
+(def trrs-radius (/ 8 2))
+(def trrs-outer-radius (/ 10 2))
+
+(def trrs-inner-radius (/ 3.6 2))
+
+(def trrs-model
+  (binding [*fn* 32]
+    (difference
+      (union
+        (->>
+          (cylinder trrs-radius trrs-base-length)
+          (translate [0 0 (/ trrs-base-length 2)])
+        )
+        (->>
+          (cylinder trrs-outer-radius trrs-hold-length)
+          (translate [0 0 (+ trrs-base-length (/ trrs-hold-length 2))])
+        )
+        (->>
+          (cylinder trrs-radius trrs-outer-length)
+          (translate [0 0 (+ trrs-inner-length (/ trrs-outer-length 2))])
+        )
+      )
+      (->>
+        (cylinder trrs-inner-radius trrs-length)
+        (translate [0 0 (/ trrs-length 2)])
+      )
+    )
+  )
+)
+
+(def trrs-wall-pos-1 (key-position 0 0 (map + (wall-locate2 0 1) [25 (/ mount-height 2) 0])))
+(def trrs-wall-pos [(first trrs-wall-pos-1) (second trrs-wall-pos-1) (+ trrs-outer-radius 5)])
+(def trrs-pos (map - trrs-wall-pos [0 (+ trrs-inner-length (/ web-thickness 2)) 0]))
+
+(def trrs-model-in-place
+  (->>
+    trrs-model
+    (rotate (/ π 2) [-1 0 0])
+    (translate trrs-pos)
+  )
+)
+
+(def trrs-hole
+  (binding [*fn* 32]
+    (->>
+      (cylinder trrs-radius (+ web-thickness 1))
+      (rotate (/ π 2) [1 0 0])
+      (translate trrs-wall-pos)
+    )
+  )
+)
+
 (defn screw-insert-shape [bottom-radius top-radius height]
+  (binding [*fn* 30]
    (union (cylinder [bottom-radius top-radius] height)
-          (translate [0 0 (/ height 2)] (sphere top-radius))))
+          (translate [0 0 (/ height 2)] (sphere top-radius)))))
 
 (defn screw-insert [column row bottom-radius top-radius height]
   (let [shift-right   (= column lastcol)
@@ -714,8 +820,10 @@
                                        screw-insert-outers
                                        )
                                 rpi-usb-hole
-                                screw-insert-holes)
+                                screw-insert-holes
+                                trrs-hole)
                     ; rpi-model
+                    ; trrs-model-in-place
                     ; thumbcaps
                     ; caps
                     )
@@ -728,36 +836,57 @@
 (spit "things/left.scad"
       (write-scad (mirror [-1 0 0] model-right)))
 
-(def cutshape
-           (project
-             (translate [0 0 -1.0]
-               (difference
-                   (union
-                    key-holes
-                    connectors
-                    thumb
-                    thumb-connectors
-                    case-walls
-                    screw-insert-outers
-                    key-fill
-                    thumb-fill
-                    )
-                 (translate [0 0 -20] (cube 350 350 40))
-               )
-             )
-           )
-           )
+(def base-plate-height 3)
 
-(def custom-right-plate
-    (difference (extrude-linear {:height 3} cutshape) (union (translate [0 0 -10] screw-insert-screw-holes) rpi-drills rpi-usb-hole))
+(def base-plate
+  (->>
+    (extrude-linear {:height base-plate-height}
+      (project
+        (translate [0 0 -1.0]
+          (difference
+            (union
+              key-holes
+              connectors
+              thumb
+              thumb-connectors
+              case-walls
+              screw-insert-outers
+              key-fill
+              thumb-fill
+            )
+            (translate [0 0 -20] (cube 350 350 40))
+          )
+        )
+      )
+    )
+    (translate [0 0 (/ base-plate-height 2)])
+  )
+)
+
+(def right-plate
+  (difference
+    (union
+      base-plate
+      (translate [0 0 base-plate-height] rpi-posts)
+    )
+    (union
+      (translate [0 0 -10] screw-insert-screw-holes)
+      rpi-drills-with-contersunk
+      rpi-usb-hole
+    )
+  )
 )
 
 (spit "things/right-plate.scad"
-      (write-scad custom-right-plate)
-);
+      (write-scad right-plate)
+)
 
 (spit "things/left-plate.scad"
-      (write-scad (mirror [-1 0 0] custom-right-plate))
-);
+      (write-scad (mirror [-1 0 0] right-plate))
+)
+
+(spit "things/trrs-model.scad"
+      (write-scad trrs-model)
+)
 
 (defn -main [dum] 1)  ; dummy to make it easier to batch
